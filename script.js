@@ -83,36 +83,79 @@ class YogaXDTools {
         this.showLoading(true);
         
         try {
-            // Upload image to get public URL first
-            const imageUrl = await this.uploadImageForAPI(this.originalImageData);
-            
-            if (!imageUrl) {
-                throw new Error('Gagal mengupload gambar');
+            // Try CORS-free APIs first
+            const corsFreeMethods = [
+                {
+                    name: 'api-cors-proxy',
+                    process: async () => {
+                        const base64Data = this.originalImageData.split(',')[1];
+                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.ferdev.my.id/maker/tohitam?link=data:image/jpeg;base64,${base64Data}&apikey=yogaapi28`)}`;
+                        const response = await fetch(proxyUrl);
+                        if (response.ok) {
+                            return await response.blob();
+                        }
+                        throw new Error('Proxy failed');
+                    }
+                },
+                {
+                    name: 'direct-base64',
+                    process: async () => {
+                        const base64Data = this.originalImageData.split(',')[1];
+                        const apiUrl = `https://api.ferdev.my.id/maker/tohitam?link=data:image/jpeg;base64,${base64Data}&apikey=yogaapi28`;
+                        const response = await fetch(apiUrl, {
+                            method: 'GET',
+                            mode: 'cors',
+                            headers: {
+                                'Accept': 'image/*'
+                            }
+                        });
+                        if (response.ok) {
+                            return await response.blob();
+                        }
+                        throw new Error('Direct API failed');
+                    }
+                },
+                {
+                    name: 'local-processing',
+                    process: async () => {
+                        const processedDataUrl = await this.processImageLocallyToHitam(this.originalImageData);
+                        const response = await fetch(processedDataUrl);
+                        return await response.blob();
+                    }
+                }
+            ];
+
+            let success = false;
+            let processedImageUrl;
+
+            for (const method of corsFreeMethods) {
+                try {
+                    const imageBlob = await method.process();
+                    processedImageUrl = URL.createObjectURL(imageBlob);
+                    
+                    // Update preview with processed image
+                    const preview = document.getElementById('tohitam-preview');
+                    preview.src = processedImageUrl;
+                    
+                    // Store processed image for download
+                    this.currentProcessedImage = processedImageUrl;
+                    
+                    // Show download button
+                    const downloadBtn = document.querySelector('#tohitam-result .download-btn');
+                    downloadBtn.style.display = 'flex';
+                    
+                    this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
+                    success = true;
+                    break;
+                    
+                } catch (error) {
+                    console.log(`${method.name} failed:`, error);
+                    continue;
+                }
             }
             
-            // Use ferdev ToHitam API (confirmed working)
-            const apiUrl = `https://api.ferdev.my.id/maker/tohitam?link=${encodeURIComponent(imageUrl)}&apikey=yogaapi28`;
-            const response = await fetch(apiUrl);
-            
-            if (response.ok) {
-                // Get the processed image blob
-                const imageBlob = await response.blob();
-                const processedImageUrl = URL.createObjectURL(imageBlob);
-                
-                // Update preview with processed image
-                const preview = document.getElementById('tohitam-preview');
-                preview.src = processedImageUrl;
-                
-                // Store processed image for download
-                this.currentProcessedImage = processedImageUrl;
-                
-                // Show download button
-                const downloadBtn = document.querySelector('#tohitam-result .download-btn');
-                downloadBtn.style.display = 'flex';
-                
-                this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
-            } else {
-                throw new Error(`API Error: ${response.status}`);
+            if (!success) {
+                throw new Error('Semua metode gagal. Silakan coba lagi.');
             }
             
         } catch (error) {
