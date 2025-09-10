@@ -83,61 +83,14 @@ class YogaXDTools {
         this.showLoading(true);
         
         try {
-            // Convert image to base64 without data URL prefix for API
-            const base64Data = this.originalImageData.split(',')[1];
-            
-            // Use ferdev ToHitam API with base64 data
-            const response = await fetch('https://api.ferdev.my.id/maker/tohitam', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    image: base64Data,
-                    apikey: 'yogaapi28'
-                })
-            });
-            
-            if (response.ok) {
-                // Get the processed image blob
-                const imageBlob = await response.blob();
-                const processedImageUrl = URL.createObjectURL(imageBlob);
-                
-                // Update preview with processed image
-                const preview = document.getElementById('tohitam-preview');
-                preview.src = processedImageUrl;
-                
-                // Store processed image for download
-                this.currentProcessedImage = processedImageUrl;
-                
-                // Show download button
-                const downloadBtn = document.querySelector('#tohitam-result .download-btn');
-                downloadBtn.style.display = 'flex';
-                
-                this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
-            } else {
-                // Fallback to GET method with image upload
-                await this.processToHitamFallback();
-            }
-            
-        } catch (error) {
-            // Try fallback method
-            await this.processToHitamFallback();
-        }
-        
-        this.showLoading(false);
-    }
-
-    async processToHitamFallback() {
-        try {
-            // Upload image to a reliable service first
-            const imageUrl = await this.uploadImageReliably(this.originalImageData);
+            // Upload image to get public URL first
+            const imageUrl = await this.uploadImageForAPI(this.originalImageData);
             
             if (!imageUrl) {
                 throw new Error('Gagal mengupload gambar');
             }
             
-            // Use ferdev ToHitam API with image URL
+            // Use ferdev ToHitam API (confirmed working)
             const apiUrl = `https://api.ferdev.my.id/maker/tohitam?link=${encodeURIComponent(imageUrl)}&apikey=yogaapi28`;
             const response = await fetch(apiUrl);
             
@@ -163,18 +116,109 @@ class YogaXDTools {
             }
             
         } catch (error) {
-            this.showNotification('Error memproses gambar. Tidak dapat mengupload gambar. Periksa koneksi internet stabil dan coba lagi.', 'error');
+            this.showNotification('Error memproses gambar: ' + error.message, 'error');
         }
+        
+        this.showLoading(false);
     }
 
-    async uploadImageReliably(imageDataUrl) {
+    async processImageLocallyToHitam(imageDataUrl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = () => {
+                try {
+                    // Create canvas
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set canvas size to match image
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw image to canvas
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Get image data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Simple skin tone detection and replacement
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        
+                        // Detect skin tones (simplified algorithm)
+                        const isSkinTone = (
+                            r > 95 && g > 40 && b > 20 &&
+                            r > g && r > b &&
+                            Math.abs(r - g) > 15 &&
+                            r - b > 15
+                        ) || (
+                            r > 220 && g > 210 && b > 170 &&
+                            Math.abs(r - g) <= 15 &&
+                            r > b && g > b
+                        );
+                        
+                        if (isSkinTone) {
+                            // Replace with darker skin tone
+                            const darkness = 0.3; // Adjust darkness level
+                            data[i] = Math.max(0, r * darkness + 40);     // Red with brown tint
+                            data[i + 1] = Math.max(0, g * darkness + 25); // Green
+                            data[i + 2] = Math.max(0, b * darkness + 15); // Blue
+                        }
+                    }
+                    
+                    // Put the modified image data back to canvas
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    // Convert canvas to data URL
+                    const processedDataUrl = canvas.toDataURL('image/png', 0.9);
+                    resolve(processedDataUrl);
+                    
+                } catch (error) {
+                    reject(new Error('Gagal memproses gambar: ' + error.message));
+                }
+            };
+            
+            img.onerror = () => {
+                reject(new Error('Gagal memuat gambar'));
+            };
+            
+            img.src = imageDataUrl;
+        });
+    }
+
+    async uploadImageForAPI(imageDataUrl) {
         try {
             // Convert data URL to blob
             const response = await fetch(imageDataUrl);
             const blob = await response.blob();
             
-            // Try multiple upload services in sequence
+            // Try multiple reliable upload services
             const uploadServices = [
+                {
+                    name: 'qu.ax',
+                    upload: async () => {
+                        const formData = new FormData();
+                        formData.append('files[]', blob, 'image.jpg');
+                        
+                        const uploadResponse = await fetch('https://qu.ax/upload.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const data = await uploadResponse.json();
+                            if (data.success && data.files && data.files[0]) {
+                                return data.files[0].url;
+                            }
+                        }
+                        throw new Error('Upload failed');
+                    }
+                },
                 {
                     name: 'telegra.ph',
                     upload: async () => {
@@ -211,33 +255,6 @@ class YogaXDTools {
                             const url = await uploadResponse.text();
                             if (url.startsWith('https://')) {
                                 return url.trim();
-                            }
-                        }
-                        throw new Error('Upload failed');
-                    }
-                },
-                {
-                    name: 'imgbb',
-                    upload: async () => {
-                        // Convert blob to base64
-                        const base64 = await new Promise((resolve) => {
-                            const reader = new FileReader();
-                            reader.onload = () => resolve(reader.result.split(',')[1]);
-                            reader.readAsDataURL(blob);
-                        });
-                        
-                        const formData = new FormData();
-                        formData.append('image', base64);
-                        
-                        const uploadResponse = await fetch('https://api.imgbb.com/1/upload?key=d0b1a1b1f1e1c1d1a1b1c1d1e1f1a1b1', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        if (uploadResponse.ok) {
-                            const data = await uploadResponse.json();
-                            if (data.success && data.data && data.data.url) {
-                                return data.data.url;
                             }
                         }
                         throw new Error('Upload failed');
