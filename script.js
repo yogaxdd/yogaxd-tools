@@ -244,6 +244,49 @@ class YogaXDTools {
             // Try multiple reliable upload services with CORS handling
             const uploadServices = [
                 {
+                    name: 'imgur',
+                    upload: async () => {
+                        const formData = new FormData();
+                        formData.append('image', blob);
+                        
+                        const uploadResponse = await fetch('https://api.imgur.com/3/image', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': 'Client-ID 546c25a59c58ad7'
+                            },
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const data = await uploadResponse.json();
+                            if (data.success && data.data && data.data.link) {
+                                return data.data.link;
+                            }
+                        }
+                        throw new Error('Imgur upload failed');
+                    }
+                },
+                {
+                    name: 'postimages',
+                    upload: async () => {
+                        const formData = new FormData();
+                        formData.append('upload', blob, 'image.jpg');
+                        
+                        const uploadResponse = await fetch('https://postimages.org/json/rr', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const data = await uploadResponse.json();
+                            if (data.status === 'OK' && data.url) {
+                                return data.url;
+                            }
+                        }
+                        throw new Error('PostImages upload failed');
+                    }
+                },
+                {
                     name: 'imgbb',
                     upload: async () => {
                         // Convert blob to base64
@@ -271,23 +314,23 @@ class YogaXDTools {
                     }
                 },
                 {
-                    name: 'qu.ax',
+                    name: 'smms',
                     upload: async () => {
                         const formData = new FormData();
-                        formData.append('files[]', blob, 'image.jpg');
+                        formData.append('smfile', blob, 'image.jpg');
                         
-                        const uploadResponse = await fetch('https://qu.ax/upload.php', {
+                        const uploadResponse = await fetch('https://sm.ms/api/v2/upload', {
                             method: 'POST',
                             body: formData
                         });
                         
                         if (uploadResponse.ok) {
                             const data = await uploadResponse.json();
-                            if (data.success && data.files && data.files[0]) {
-                                return data.files[0].url;
+                            if (data.success && data.data && data.data.url) {
+                                return data.data.url;
                             }
                         }
-                        throw new Error('qu.ax upload failed');
+                        throw new Error('SM.MS upload failed');
                     }
                 },
                 {
@@ -308,28 +351,6 @@ class YogaXDTools {
                             }
                         }
                         throw new Error('telegra.ph upload failed');
-                    }
-                },
-                {
-                    name: 'freeimage.host',
-                    upload: async () => {
-                        const formData = new FormData();
-                        formData.append('source', blob, 'image.jpg');
-                        formData.append('type', 'file');
-                        formData.append('action', 'upload');
-                        
-                        const uploadResponse = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        if (uploadResponse.ok) {
-                            const data = await uploadResponse.json();
-                            if (data.success && data.image && data.image.url) {
-                                return data.image.url;
-                            }
-                        }
-                        throw new Error('freeimage.host upload failed');
                     }
                 }
             ];
