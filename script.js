@@ -83,14 +83,61 @@ class YogaXDTools {
         this.showLoading(true);
         
         try {
-            // First, upload image to get a URL
-            const imageUrl = await this.uploadImageToImgbb(this.originalImageData);
+            // Convert image to base64 without data URL prefix for API
+            const base64Data = this.originalImageData.split(',')[1];
+            
+            // Use ferdev ToHitam API with base64 data
+            const response = await fetch('https://api.ferdev.my.id/maker/tohitam', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: base64Data,
+                    apikey: 'yogaapi28'
+                })
+            });
+            
+            if (response.ok) {
+                // Get the processed image blob
+                const imageBlob = await response.blob();
+                const processedImageUrl = URL.createObjectURL(imageBlob);
+                
+                // Update preview with processed image
+                const preview = document.getElementById('tohitam-preview');
+                preview.src = processedImageUrl;
+                
+                // Store processed image for download
+                this.currentProcessedImage = processedImageUrl;
+                
+                // Show download button
+                const downloadBtn = document.querySelector('#tohitam-result .download-btn');
+                downloadBtn.style.display = 'flex';
+                
+                this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
+            } else {
+                // Fallback to GET method with image upload
+                await this.processToHitamFallback();
+            }
+            
+        } catch (error) {
+            // Try fallback method
+            await this.processToHitamFallback();
+        }
+        
+        this.showLoading(false);
+    }
+
+    async processToHitamFallback() {
+        try {
+            // Upload image to a reliable service first
+            const imageUrl = await this.uploadImageReliably(this.originalImageData);
             
             if (!imageUrl) {
                 throw new Error('Gagal mengupload gambar');
             }
             
-            // Now use ferdev ToHitam API
+            // Use ferdev ToHitam API with image URL
             const apiUrl = `https://api.ferdev.my.id/maker/tohitam?link=${encodeURIComponent(imageUrl)}&apikey=yogaapi28`;
             const response = await fetch(apiUrl);
             
@@ -110,103 +157,111 @@ class YogaXDTools {
                 const downloadBtn = document.querySelector('#tohitam-result .download-btn');
                 downloadBtn.style.display = 'flex';
                 
-                this.showNotification('Gambar berhasil diubah menjadi hitam putih!', 'success');
+                this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
             } else {
                 throw new Error(`API Error: ${response.status}`);
             }
             
         } catch (error) {
-            this.showNotification('Error memproses gambar: ' + error.message, 'error');
+            this.showNotification('Error memproses gambar. Tidak dapat mengupload gambar. Periksa koneksi internet stabil dan coba lagi.', 'error');
         }
-        
-        this.showLoading(false);
     }
 
-    async uploadImageToImgbb(imageDataUrl) {
+    async uploadImageReliably(imageDataUrl) {
         try {
             // Convert data URL to blob
             const response = await fetch(imageDataUrl);
             const blob = await response.blob();
             
-            // Create FormData for telegra.ph upload (more reliable)
-            const formData = new FormData();
-            formData.append('file', blob, 'image.jpg');
+            // Try multiple upload services in sequence
+            const uploadServices = [
+                {
+                    name: 'telegra.ph',
+                    upload: async () => {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'image.jpg');
+                        
+                        const uploadResponse = await fetch('https://telegra.ph/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const data = await uploadResponse.json();
+                            if (data && data[0] && data[0].src) {
+                                return 'https://telegra.ph' + data[0].src;
+                            }
+                        }
+                        throw new Error('Upload failed');
+                    }
+                },
+                {
+                    name: 'catbox.moe',
+                    upload: async () => {
+                        const formData = new FormData();
+                        formData.append('reqtype', 'fileupload');
+                        formData.append('fileToUpload', blob, 'image.jpg');
+                        
+                        const uploadResponse = await fetch('https://catbox.moe/user/api.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const url = await uploadResponse.text();
+                            if (url.startsWith('https://')) {
+                                return url.trim();
+                            }
+                        }
+                        throw new Error('Upload failed');
+                    }
+                },
+                {
+                    name: 'imgbb',
+                    upload: async () => {
+                        // Convert blob to base64
+                        const base64 = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = () => resolve(reader.result.split(',')[1]);
+                            reader.readAsDataURL(blob);
+                        });
+                        
+                        const formData = new FormData();
+                        formData.append('image', base64);
+                        
+                        const uploadResponse = await fetch('https://api.imgbb.com/1/upload?key=d0b1a1b1f1e1c1d1a1b1c1d1e1f1a1b1', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const data = await uploadResponse.json();
+                            if (data.success && data.data && data.data.url) {
+                                return data.data.url;
+                            }
+                        }
+                        throw new Error('Upload failed');
+                    }
+                }
+            ];
             
-            // Use telegra.ph which is more CORS-friendly
-            const uploadResponse = await fetch('https://telegra.ph/upload', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (uploadResponse.ok) {
-                const data = await uploadResponse.json();
-                if (data && data[0] && data[0].src) {
-                    return 'https://telegra.ph' + data[0].src;
+            // Try each service
+            for (const service of uploadServices) {
+                try {
+                    const url = await service.upload();
+                    if (url) {
+                        return url;
+                    }
+                } catch (error) {
+                    console.log(`${service.name} upload failed:`, error);
+                    continue;
                 }
             }
             
-            // Fallback to pomf.lain.la
-            return await this.uploadToAlternativeService(imageDataUrl);
+            throw new Error('Semua layanan upload gambar tidak tersedia');
             
         } catch (error) {
-            return await this.uploadToAlternativeService(imageDataUrl);
-        }
-    }
-
-    async uploadToAlternativeService(imageDataUrl) {
-        try {
-            const response = await fetch(imageDataUrl);
-            const blob = await response.blob();
-            
-            const formData = new FormData();
-            formData.append('files[]', blob, 'image.jpg');
-            
-            // Use pomf.lain.la (reliable and CORS-friendly)
-            const uploadResponse = await fetch('https://pomf.lain.la/upload.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (uploadResponse.ok) {
-                const data = await uploadResponse.json();
-                if (data.success && data.files && data.files[0]) {
-                    return data.files[0].url;
-                }
-            }
-            
-            // Final fallback - use 0x0.st
-            return await this.createTemporaryImageUrl(imageDataUrl);
-            
-        } catch (error) {
-            return await this.createTemporaryImageUrl(imageDataUrl);
-        }
-    }
-
-    async createTemporaryImageUrl(imageDataUrl) {
-        try {
-            const response = await fetch(imageDataUrl);
-            const blob = await response.blob();
-            
-            const formData = new FormData();
-            formData.append('file', blob);
-            
-            // Use 0x0.st (simple and reliable)
-            const uploadResponse = await fetch('https://0x0.st', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (uploadResponse.ok) {
-                const url = await uploadResponse.text();
-                if (url.startsWith('https://')) {
-                    return url.trim();
-                }
-            }
-            
-            throw new Error('Semua layanan upload gambar tidak tersedia. Silakan coba lagi nanti.');
-            
-        } catch (error) {
-            throw new Error('Tidak dapat mengupload gambar. Pastikan koneksi internet stabil dan coba lagi.');
+            throw new Error('Tidak dapat mengupload gambar: ' + error.message);
         }
     }
 
