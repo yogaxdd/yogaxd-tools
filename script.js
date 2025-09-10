@@ -83,38 +83,8 @@ class YogaXDTools {
         this.showLoading(true);
         
         try {
-            // Try CORS-free APIs first
+            // Use local processing as primary method since API isn't working properly
             const corsFreeMethods = [
-                {
-                    name: 'api-cors-proxy',
-                    process: async () => {
-                        const base64Data = this.originalImageData.split(',')[1];
-                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://api.ferdev.my.id/maker/tohitam?link=data:image/jpeg;base64,${base64Data}&apikey=yogaapi28`)}`;
-                        const response = await fetch(proxyUrl);
-                        if (response.ok) {
-                            return await response.blob();
-                        }
-                        throw new Error('Proxy failed');
-                    }
-                },
-                {
-                    name: 'direct-base64',
-                    process: async () => {
-                        const base64Data = this.originalImageData.split(',')[1];
-                        const apiUrl = `https://api.ferdev.my.id/maker/tohitam?link=data:image/jpeg;base64,${base64Data}&apikey=yogaapi28`;
-                        const response = await fetch(apiUrl, {
-                            method: 'GET',
-                            mode: 'cors',
-                            headers: {
-                                'Accept': 'image/*'
-                            }
-                        });
-                        if (response.ok) {
-                            return await response.blob();
-                        }
-                        throw new Error('Direct API failed');
-                    }
-                },
                 {
                     name: 'local-processing',
                     process: async () => {
@@ -187,30 +157,20 @@ class YogaXDTools {
                     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                     const data = imageData.data;
                     
-                    // Simple skin tone detection and replacement
+                    // Enhanced skin tone detection and replacement
                     for (let i = 0; i < data.length; i += 4) {
                         const r = data[i];
                         const g = data[i + 1];
                         const b = data[i + 2];
                         
-                        // Detect skin tones (simplified algorithm)
-                        const isSkinTone = (
-                            r > 95 && g > 40 && b > 20 &&
-                            r > g && r > b &&
-                            Math.abs(r - g) > 15 &&
-                            r - b > 15
-                        ) || (
-                            r > 220 && g > 210 && b > 170 &&
-                            Math.abs(r - g) <= 15 &&
-                            r > b && g > b
-                        );
+                        // Multiple skin tone detection algorithms
+                        const isSkinTone = this.detectSkinTone(r, g, b);
                         
                         if (isSkinTone) {
-                            // Replace with darker skin tone
-                            const darkness = 0.3; // Adjust darkness level
-                            data[i] = Math.max(0, r * darkness + 40);     // Red with brown tint
-                            data[i + 1] = Math.max(0, g * darkness + 25); // Green
-                            data[i + 2] = Math.max(0, b * darkness + 15); // Blue
+                            // Replace with darker skin tone (more realistic brown/black)
+                            data[i] = Math.min(255, Math.max(20, r * 0.2 + 60));     // Red with brown tint
+                            data[i + 1] = Math.min(255, Math.max(15, g * 0.2 + 35)); // Green
+                            data[i + 2] = Math.min(255, Math.max(10, b * 0.2 + 20)); // Blue
                         }
                     }
                     
@@ -232,6 +192,61 @@ class YogaXDTools {
             
             img.src = imageDataUrl;
         });
+    }
+
+    detectSkinTone(r, g, b) {
+        // Multiple skin tone detection methods for better accuracy
+        
+        // Method 1: Basic skin tone detection
+        const method1 = (
+            r > 95 && g > 40 && b > 20 &&
+            r > g && r > b &&
+            Math.abs(r - g) > 15 &&
+            r - b > 15
+        );
+        
+        // Method 2: Light skin tone detection
+        const method2 = (
+            r > 220 && g > 210 && b > 170 &&
+            Math.abs(r - g) <= 15 &&
+            r > b && g > b
+        );
+        
+        // Method 3: Medium skin tone detection
+        const method3 = (
+            r > 150 && g > 100 && b > 80 &&
+            r > g && g > b &&
+            (r - g) < 50 && (g - b) < 30
+        );
+        
+        // Method 4: HSV-based skin detection
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min;
+        
+        let h = 0;
+        if (delta !== 0) {
+            if (max === r) {
+                h = ((g - b) / delta) % 6;
+            } else if (max === g) {
+                h = (b - r) / delta + 2;
+            } else {
+                h = (r - g) / delta + 4;
+            }
+        }
+        h = Math.round(h * 60);
+        if (h < 0) h += 360;
+        
+        const s = max === 0 ? 0 : delta / max;
+        const v = max / 255;
+        
+        const method4 = (
+            h >= 0 && h <= 50 &&
+            s >= 0.23 && s <= 0.68 &&
+            v >= 0.35 && v <= 0.95
+        );
+        
+        return method1 || method2 || method3 || method4;
     }
 
     async uploadImageForAPI(imageDataUrl) {
