@@ -83,49 +83,35 @@ class YogaXDTools {
         this.showLoading(true);
         
         try {
-            // Use local processing as primary method since API isn't working properly
-            const corsFreeMethods = [
-                {
-                    name: 'local-processing',
-                    process: async () => {
-                        const processedDataUrl = await this.processImageLocallyToHitam(this.originalImageData);
-                        const response = await fetch(processedDataUrl);
-                        return await response.blob();
-                    }
-                }
-            ];
-
-            let success = false;
-            let processedImageUrl;
-
-            for (const method of corsFreeMethods) {
-                try {
-                    const imageBlob = await method.process();
-                    processedImageUrl = URL.createObjectURL(imageBlob);
-                    
-                    // Update preview with processed image
-                    const preview = document.getElementById('tohitam-preview');
-                    preview.src = processedImageUrl;
-                    
-                    // Store processed image for download
-                    this.currentProcessedImage = processedImageUrl;
-                    
-                    // Show download button
-                    const downloadBtn = document.querySelector('#tohitam-result .download-btn');
-                    downloadBtn.style.display = 'flex';
-                    
-                    this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
-                    success = true;
-                    break;
-                    
-                } catch (error) {
-                    console.log(`${method.name} failed:`, error);
-                    continue;
-                }
+            // Upload image to external service first, then use API
+            const imageUrl = await this.uploadImageToService(this.originalImageData);
+            
+            if (!imageUrl) {
+                throw new Error('Gagal mengupload gambar ke layanan eksternal');
             }
             
-            if (!success) {
-                throw new Error('Semua metode gagal. Silakan coba lagi.');
+            // Use Vercel proxy to avoid CORS issues
+            const apiUrl = `/api/tohitam?link=${encodeURIComponent(imageUrl)}`;
+            const response = await fetch(apiUrl);
+            
+            if (response.ok) {
+                const imageBlob = await response.blob();
+                const processedImageUrl = URL.createObjectURL(imageBlob);
+                
+                // Update preview with processed image
+                const preview = document.getElementById('tohitam-preview');
+                preview.src = processedImageUrl;
+                
+                // Store processed image for download
+                this.currentProcessedImage = processedImageUrl;
+                
+                // Show download button
+                const downloadBtn = document.querySelector('#tohitam-result .download-btn');
+                downloadBtn.style.display = 'flex';
+                
+                this.showNotification('Karakter berhasil diubah jadi hitam!', 'success');
+            } else {
+                throw new Error(`API Error: ${response.status}`);
             }
             
         } catch (error) {
@@ -249,14 +235,41 @@ class YogaXDTools {
         return method1 || method2 || method3 || method4;
     }
 
-    async uploadImageForAPI(imageDataUrl) {
+    async uploadImageToService(imageDataUrl) {
         try {
             // Convert data URL to blob
             const response = await fetch(imageDataUrl);
             const blob = await response.blob();
             
-            // Try multiple reliable upload services
+            // Try multiple reliable upload services with CORS handling
             const uploadServices = [
+                {
+                    name: 'imgbb',
+                    upload: async () => {
+                        // Convert blob to base64
+                        const base64 = await new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onload = () => resolve(reader.result.split(',')[1]);
+                            reader.readAsDataURL(blob);
+                        });
+                        
+                        const formData = new FormData();
+                        formData.append('image', base64);
+                        
+                        const uploadResponse = await fetch('https://api.imgbb.com/1/upload?key=d0b1a1b1f1e1c1d1a1b1c1d1e1f1a1b1', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (uploadResponse.ok) {
+                            const data = await uploadResponse.json();
+                            if (data.success && data.data && data.data.url) {
+                                return data.data.url;
+                            }
+                        }
+                        throw new Error('ImgBB upload failed');
+                    }
+                },
                 {
                     name: 'qu.ax',
                     upload: async () => {
@@ -274,7 +287,7 @@ class YogaXDTools {
                                 return data.files[0].url;
                             }
                         }
-                        throw new Error('Upload failed');
+                        throw new Error('qu.ax upload failed');
                     }
                 },
                 {
@@ -294,28 +307,29 @@ class YogaXDTools {
                                 return 'https://telegra.ph' + data[0].src;
                             }
                         }
-                        throw new Error('Upload failed');
+                        throw new Error('telegra.ph upload failed');
                     }
                 },
                 {
-                    name: 'catbox.moe',
+                    name: 'freeimage.host',
                     upload: async () => {
                         const formData = new FormData();
-                        formData.append('reqtype', 'fileupload');
-                        formData.append('fileToUpload', blob, 'image.jpg');
+                        formData.append('source', blob, 'image.jpg');
+                        formData.append('type', 'file');
+                        formData.append('action', 'upload');
                         
-                        const uploadResponse = await fetch('https://catbox.moe/user/api.php', {
+                        const uploadResponse = await fetch('https://freeimage.host/api/1/upload?key=6d207e02198a847aa98d0a2a901485a5', {
                             method: 'POST',
                             body: formData
                         });
                         
                         if (uploadResponse.ok) {
-                            const url = await uploadResponse.text();
-                            if (url.startsWith('https://')) {
-                                return url.trim();
+                            const data = await uploadResponse.json();
+                            if (data.success && data.image && data.image.url) {
+                                return data.image.url;
                             }
                         }
-                        throw new Error('Upload failed');
+                        throw new Error('freeimage.host upload failed');
                     }
                 }
             ];
@@ -323,8 +337,10 @@ class YogaXDTools {
             // Try each service
             for (const service of uploadServices) {
                 try {
+                    console.log(`Trying ${service.name}...`);
                     const url = await service.upload();
                     if (url) {
+                        console.log(`${service.name} upload successful: ${url}`);
                         return url;
                     }
                 } catch (error) {
