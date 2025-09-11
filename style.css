@@ -276,9 +276,38 @@ body {
     color: var(--text-primary);
 }
 
+input[type="text"],
+input[type="url"],
+input[type="number"],
+textarea {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 15px;
+    background: var(--primary-color);
+    box-shadow: 
+        inset 6px 6px 12px var(--shadow-dark),
+        inset -6px -6px 12px var(--shadow-light);
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
 textarea {
     min-height: 120px;
     resize: vertical;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+    outline: none;
+    box-shadow: 
+        inset 6px 6px 12px var(--shadow-dark),
+        inset -6px -6px 12px var(--shadow-light),
+        0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Upload Area */
