@@ -115,7 +115,7 @@ class YogaXDTools {
             }
             
         } catch (error) {
-            this.showNotification('Error memproses gambar: ' + error.message, 'error');
+            this.handleError(error, 'ToHitam');
         }
         
         this.showLoading(false);
@@ -416,7 +416,7 @@ class YogaXDTools {
                 throw new Error(`API Error: ${response.status}`);
             }
         } catch (error) {
-            this.showNotification('Error memperpendek URL: ' + error.message, 'error');
+            this.handleError(error, 'Shortlink');
         }
         
         this.showLoading(false);
@@ -471,7 +471,7 @@ class YogaXDTools {
             }
             
         } catch (error) {
-            this.showNotification('Error membuat QR code: ' + error.message, 'error');
+            this.handleError(error, 'QR Code');
         }
         
         this.showLoading(false);
@@ -540,7 +540,7 @@ class YogaXDTools {
             }
             
         } catch (error) {
-            this.showNotification('Error membuat iPhone quote: ' + error.message, 'error');
+            this.handleError(error, 'iPhone Quote');
         }
         
         this.showLoading(false);
@@ -568,7 +568,7 @@ class YogaXDTools {
             }
             
         } catch (error) {
-            this.showNotification('Error memuat stock: ' + error.message, 'error');
+            this.handleError(error, 'Garden Stock');
         }
         
         this.showLoading(false);
@@ -713,6 +713,48 @@ class YogaXDTools {
         return Math.random().toString(36).substr(2, 8);
     }
 
+    handleError(error, toolName) {
+        let errorMessage = '';
+        let explanation = '';
+        
+        // Check if it's an HTTP error
+        if (error.message.includes('API Error:')) {
+            const statusCode = error.message.match(/\d+/)?.[0];
+            
+            switch (statusCode) {
+                case '404':
+                    errorMessage = `Error 404 - ${toolName} tidak ditemukan`;
+                    explanation = 'Server tidak bisa menemukan API yang diminta. Silahkan refresh website ini.';
+                    break;
+                case '500':
+                    errorMessage = `Error 500 - ${toolName} server bermasalah`;
+                    explanation = 'Ada masalah di server API. Silahkan refresh website ini.';
+                    break;
+                case '503':
+                    errorMessage = `Error 503 - ${toolName} lagi maintenance`;
+                    explanation = 'Service lagi tidak tersedia, Silahkan refresh website ini.';
+                    break;
+                case '429':
+                    errorMessage = `Error 429 - Terlalu banyak request`;
+                    explanation = 'Kamu terlalu sering pakai tool ini. Tunggu sebentar ya.';
+                    break;
+                default:
+                    errorMessage = `Error ${statusCode} - ${toolName} bermasalah`;
+                    explanation = 'Ada masalah dengan API. Coba lagi nanti ya.';
+            }
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            errorMessage = `Koneksi bermasalah - ${toolName}`;
+            explanation = 'Cek koneksi internet kamu atau coba refresh website ini.';
+        } else {
+            errorMessage = `${toolName} error`;
+            explanation = error.message || 'Ada masalah yang tidak diketahui.';
+        }
+        
+        // Show error with explanation and refresh suggestion
+        this.showNotification(`${errorMessage}: ${explanation}`, 'error');
+        this.showNotification('Kalau masih error, coba refresh websitenya ya! 🔄', 'info');
+    }
+
     showLoading(show) {
         const overlay = document.getElementById('loading-overlay');
         overlay.style.display = show ? 'block' : 'none';
@@ -729,6 +771,16 @@ class YogaXDTools {
             </div>
         `;
         
+        // Calculate position based on existing notifications
+        const existingNotifications = document.querySelectorAll('.notification');
+        let topPosition = 2; // Start at 2rem from top
+        
+        existingNotifications.forEach(existing => {
+            topPosition += existing.offsetHeight / 16 + 1; // Convert px to rem and add 1rem gap
+        });
+        
+        notification.style.top = `${topPosition}rem`;
+        
         // Add notification styles if not already added
         if (!document.querySelector('#notification-styles')) {
             const style = document.createElement('style');
@@ -736,7 +788,6 @@ class YogaXDTools {
             style.textContent = `
                 .notification {
                     position: fixed;
-                    top: 2rem;
                     right: 2rem;
                     background: var(--gradient-primary);
                     border-radius: 15px;
@@ -745,6 +796,7 @@ class YogaXDTools {
                     z-index: 3000;
                     animation: slideInRight 0.3s ease;
                     max-width: 300px;
+                    margin-bottom: 1rem;
                 }
                 .notification-content {
                     display: flex;
@@ -834,6 +886,11 @@ function copyToClipboard(elementId) {
 let yogaXDTools;
 document.addEventListener('DOMContentLoaded', () => {
     yogaXDTools = new YogaXDTools();
+    
+    // Show welcome alert with error handling tip
+    setTimeout(() => {
+        yogaXDTools.showNotification('Halo! Selamat datang di YogaxD Tools 👋 Kalau ada error atau tool nggak jalan, coba refresh aja websitenya ya! 🔄', 'info');
+    }, 1000);
 });
 
 // Add some interactive animations
