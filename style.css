@@ -683,3 +683,62 @@ textarea {
     border-radius: 15px;
     box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
 }
+
+/* Maintenance Styles */
+.tool-card.maintenance {
+    opacity: 0.6;
+    position: relative;
+}
+
+.tool-card.maintenance::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 193, 7, 0.1) 10px,
+        rgba(255, 193, 7, 0.1) 20px
+    );
+    border-radius: var(--border-radius);
+    pointer-events: none;
+}
+
+.maintenance-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    padding: 0.5rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.maintenance-notice i {
+    animation: spin 2s linear infinite;
+}
+
+.tool-btn.disabled {
+    background: var(--text-secondary);
+    color: white;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.tool-btn.disabled:hover {
+    transform: none;
+    box-shadow: 4px 4px 8px rgba(113, 128, 150, 0.3), -4px -4px 8px rgba(113, 128, 150, 0.1);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
