@@ -276,34 +276,6 @@ body {
     color: var(--text-primary);
 }
 
-input[type="text"],
-input[type="url"],
-textarea,
-select {
-    width: 100%;
-    padding: 1rem;
-    border: none;
-    border-radius: 15px;
-    background: var(--primary-color);
-    color: var(--text-primary);
-    font-family: inherit;
-    transition: var(--transition);
-    box-shadow: 
-        inset 6px 6px 12px var(--shadow-dark),
-        inset -6px -6px 12px var(--shadow-light);
-}
-
-input[type="text"]:focus,
-input[type="url"]:focus,
-textarea:focus,
-select:focus {
-    outline: none;
-    box-shadow: 
-        inset 8px 8px 16px var(--shadow-dark),
-        inset -8px -8px 16px var(--shadow-light),
-        0 0 0 3px rgba(102, 126, 234, 0.2);
-}
-
 textarea {
     min-height: 120px;
     resize: vertical;
@@ -563,4 +535,151 @@ textarea {
     .modal-body {
         padding: 1rem;
     }
+}
+
+/* Garden Stock Styles */
+.garden-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.weather-info {
+    background: var(--gradient-primary);
+    border-radius: 15px;
+    padding: 1rem;
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+}
+
+.weather-current {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.weather-current i {
+    color: var(--accent-color);
+}
+
+.weather-effect {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0.25rem 0;
+}
+
+.stock-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.stock-section {
+    margin-bottom: 2rem;
+}
+
+.stock-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.stock-section h3 i {
+    color: var(--accent-color);
+}
+
+.stock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.stock-item {
+    background: var(--gradient-primary);
+    border-radius: 15px;
+    padding: 1rem;
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+    transition: var(--transition);
+}
+
+.stock-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+}
+
+.stock-item.available {
+    border-left: 4px solid #48bb78;
+}
+
+.stock-item.unavailable {
+    border-left: 4px solid #f56565;
+    opacity: 0.7;
+}
+
+.item-name {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.item-quantity {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.item-status {
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.item-status.in-stock {
+    background: rgba(72, 187, 120, 0.1);
+    color: #48bb78;
+}
+
+.item-status.out-of-stock {
+    background: rgba(245, 101, 101, 0.1);
+    color: #f56565;
+}
+
+.merchant-details {
+    background: var(--gradient-secondary);
+    color: white;
+    border-radius: 15px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
+}
+
+.merchant-details h4 {
+    margin-bottom: 0.5rem;
+}
+
+.merchant-times {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.merchant-times div {
+    margin: 0.25rem 0;
+}
+
+.no-items, .no-merchant {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 2rem;
+    background: var(--gradient-primary);
+    border-radius: 15px;
+    box-shadow: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
 }
