@@ -546,6 +546,124 @@ class YogaXDTools {
         this.showLoading(false);
     }
 
+    async checkGardenStock() {
+        this.showLoading(true);
+        
+        try {
+            // Use local API endpoint to avoid CORS issues
+            const apiUrl = '/api/garden-stock';
+            const response = await fetch(apiUrl);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.success && data.data) {
+                    this.displayGardenStock(data.data);
+                    this.showNotification('Stock berhasil dimuat!', 'success');
+                } else {
+                    throw new Error('Invalid response from garden stock API');
+                }
+            } else {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+        } catch (error) {
+            this.showNotification('Error memuat stock: ' + error.message, 'error');
+        }
+        
+        this.showLoading(false);
+    }
+
+    displayGardenStock(data) {
+        // Show stock container
+        const stockContainer = document.getElementById('stock-container');
+        stockContainer.style.display = 'block';
+
+        // Display weather info
+        this.displayWeatherInfo(data.weather);
+
+        // Display each category
+        this.displayStockCategory('seeds', data.seeds);
+        this.displayStockCategory('gear', data.gear);
+        this.displayStockCategory('eggs', data.eggs);
+        this.displayStockCategory('cosmetics', data.cosmetics);
+        this.displayStockCategory('events', data.events);
+        
+        // Display traveling merchant
+        this.displayTravelingMerchant(data.travelingMerchant, data.honey);
+    }
+
+    displayWeatherInfo(weather) {
+        const weatherInfo = document.getElementById('weather-info');
+        const weatherType = document.getElementById('weather-type');
+        const weatherEffects = document.getElementById('weather-effects');
+        
+        if (weather) {
+            weatherType.textContent = `Current Weather: ${weather.type} ${weather.active ? '(Active)' : '(Inactive)'}`;
+            
+            if (weather.effects && weather.effects.length > 0) {
+                weatherEffects.innerHTML = weather.effects.map(effect => 
+                    `<div class="weather-effect">• ${effect}</div>`
+                ).join('');
+            }
+            
+            weatherInfo.style.display = 'block';
+        }
+    }
+
+    displayStockCategory(category, items) {
+        const grid = document.getElementById(`${category}-grid`);
+        
+        if (!items || items.length === 0) {
+            grid.innerHTML = '<div class="no-items">No items available</div>';
+            return;
+        }
+
+        grid.innerHTML = items.map(item => `
+            <div class="stock-item ${item.available ? 'available' : 'unavailable'}">
+                <div class="item-name">${item.name}</div>
+                <div class="item-quantity">Qty: ${item.quantity}</div>
+                <div class="item-status ${item.available ? 'in-stock' : 'out-of-stock'}">
+                    ${item.available ? 'Available' : 'Out of Stock'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    displayTravelingMerchant(merchant, honeyItems) {
+        const merchantInfo = document.getElementById('merchant-info');
+        const honeyGrid = document.getElementById('honey-grid');
+        
+        if (merchant) {
+            merchantInfo.innerHTML = `
+                <div class="merchant-details">
+                    <h4>${merchant.merchantName}</h4>
+                    <div class="merchant-times">
+                        <div>Arrived: ${merchant.arrivedAt}</div>
+                        <div>Leaves: ${merchant.leavesAt}</div>
+                    </div>
+                </div>
+            `;
+            
+            if (honeyItems && honeyItems.length > 0) {
+                honeyGrid.innerHTML = honeyItems.map(item => `
+                    <div class="stock-item ${item.available ? 'available' : 'unavailable'}">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-quantity">Qty: ${item.quantity}</div>
+                        <div class="item-status ${item.available ? 'in-stock' : 'out-of-stock'}">
+                            ${item.available ? 'Available' : 'Out of Stock'}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                honeyGrid.innerHTML = '<div class="no-items">No merchant items available</div>';
+            }
+        } else {
+            merchantInfo.innerHTML = '<div class="no-merchant">No traveling merchant currently</div>';
+            honeyGrid.innerHTML = '';
+        }
+    }
+
     downloadResult(tool) {
         if (tool === 'tohitam' && this.currentProcessedImage) {
             const link = document.createElement('a');
@@ -698,6 +816,10 @@ function downloadQR() {
 
 function generateIphoneQuote() {
     yogaXDTools.generateIphoneQuote();
+}
+
+function checkGardenStock() {
+    yogaXDTools.checkGardenStock();
 }
 
 function downloadResult(tool) {
