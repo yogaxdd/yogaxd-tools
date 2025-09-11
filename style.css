@@ -262,6 +262,13 @@ body {
     margin-bottom: 2rem;
 }
 
+.input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
 .input-group label {
     display: block;
     margin-bottom: 0.5rem;

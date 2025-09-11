@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YogaXD Tools - Neumorphism Design</title>
+    <title>YogaXD Tools</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,7 +14,7 @@
         <header class="header">
             <div class="logo">
                 <i class="fas fa-tools"></i>
-                <h1>YogaXD Tools</h1>
+                <h1>YogaxD Tools</h1>
             </div>
             <p class="subtitle">Sebuah tools yang mungkin berguna untuk kalian.</p>
         </header>
@@ -55,6 +55,19 @@
                 <h3>Text To QR</h3>
                 <p>Buat QR code dari teks dengan opsi kustomisasi</p>
                 <button class="tool-btn" onclick="openTool('qr')">
+                    <span>Open Tool</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- iPhone Quoted Message Tool -->
+            <div class="tool-card" id="iphone-card">
+                <div class="tool-icon">
+                    <i class="fab fa-apple"></i>
+                </div>
+                <h3>iPhone Quoted Message</h3>
+                <p>Buat screenshot pesan iPhone dengan quote style</p>
+                <button class="tool-btn" onclick="openTool('iphone')">
                     <span>Open Tool</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
@@ -147,6 +160,55 @@
                         </div>
                         <button class="action-btn download-btn" onclick="downloadQR()">
                             <i class="fas fa-download"></i> Download QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- iPhone Quoted Message Modal -->
+        <div class="modal" id="iphone-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fab fa-apple"></i> iPhone Quoted Message</h2>
+                    <button class="close-btn" onclick="closeModal('iphone-modal')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="iphone-message">Message Text:</label>
+                        <textarea id="iphone-message" placeholder="Enter your message here..." rows="3">test guis</textarea>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="iphone-time">Time:</label>
+                            <input type="text" id="iphone-time" placeholder="11:26" value="11:26">
+                        </div>
+                        <div class="input-group">
+                            <label for="iphone-carrier">Operator:</label>
+                            <input type="text" id="iphone-carrier" placeholder="XL OOREDOO" value="XL OOREDOO">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="iphone-battery">Battery (%):</label>
+                            <input type="number" id="iphone-battery" placeholder="88" value="88" min="0" max="100">
+                        </div>
+                        <div class="input-group">
+                            <label for="iphone-signal">Signal Strength (1-4):</label>
+                            <input type="number" id="iphone-signal" placeholder="4" value="4" min="1" max="4">
+                        </div>
+                    </div>
+                    <button class="action-btn" onclick="generateIphoneQuote()">
+                        <i class="fab fa-apple"></i> Generate iPhone Quote
+                    </button>
+                    <div class="result-area" id="iphone-result" style="display: none;">
+                        <div class="iphone-preview">
+                            <img id="iphone-preview-img" alt="iPhone Quote Preview">
+                        </div>
+                        <button class="action-btn download-btn" onclick="downloadResult('iphone')">
+                            <i class="fas fa-download"></i> Download
                         </button>
                     </div>
                 </div>

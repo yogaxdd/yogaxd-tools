@@ -490,6 +490,62 @@ class YogaXDTools {
         }
     }
 
+    async generateIphoneQuote() {
+        const messageText = document.getElementById('iphone-message').value.trim();
+        const time = document.getElementById('iphone-time').value.trim();
+        const carrierName = document.getElementById('iphone-carrier').value.trim();
+        const batteryPercentage = document.getElementById('iphone-battery').value;
+        const signalStrength = document.getElementById('iphone-signal').value;
+        
+        if (!messageText) {
+            this.showNotification('Silakan masukkan teks pesan', 'error');
+            return;
+        }
+
+        this.showLoading(true);
+        
+        try {
+            // Use local API endpoint to avoid CORS issues
+            const apiUrl = `/api/iphone-quote?` +
+                `time=${encodeURIComponent(time)}&` +
+                `messageText=${encodeURIComponent(messageText)}&` +
+                `carrierName=${encodeURIComponent(carrierName)}&` +
+                `batteryPercentage=${encodeURIComponent(batteryPercentage)}&` +
+                `signalStrength=${encodeURIComponent(signalStrength)}`;
+            
+            const response = await fetch(apiUrl);
+            
+            if (response.ok) {
+                // Get the image blob from the response
+                const imageBlob = await response.blob();
+                const imageUrl = URL.createObjectURL(imageBlob);
+                
+                // Display the result
+                const resultArea = document.getElementById('iphone-result');
+                const previewImg = document.getElementById('iphone-preview-img');
+                
+                previewImg.src = imageUrl;
+                previewImg.style.borderRadius = '15px';
+                previewImg.style.boxShadow = '6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light)';
+                previewImg.style.maxWidth = '100%';
+                previewImg.style.height = 'auto';
+                
+                // Store the image URL for download
+                this.currentIphoneImage = imageUrl;
+                
+                resultArea.style.display = 'block';
+                this.showNotification('iPhone quote berhasil dibuat!', 'success');
+            } else {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+        } catch (error) {
+            this.showNotification('Error membuat iPhone quote: ' + error.message, 'error');
+        }
+        
+        this.showLoading(false);
+    }
+
     downloadResult(tool) {
         if (tool === 'tohitam' && this.currentProcessedImage) {
             const link = document.createElement('a');
@@ -498,6 +554,13 @@ class YogaXDTools {
             link.click();
             
             this.showNotification('Image downloaded!', 'success');
+        } else if (tool === 'iphone' && this.currentIphoneImage) {
+            const link = document.createElement('a');
+            link.download = 'iphone-quote.png';
+            link.href = this.currentIphoneImage;
+            link.click();
+            
+            this.showNotification('iPhone quote berhasil diunduh!', 'success');
         }
     }
 
@@ -631,6 +694,10 @@ function generateQR() {
 
 function downloadQR() {
     yogaXDTools.downloadQR();
+}
+
+function generateIphoneQuote() {
+    yogaXDTools.generateIphoneQuote();
 }
 
 function downloadResult(tool) {
