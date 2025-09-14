@@ -484,18 +484,6 @@ textarea:focus {
     margin-bottom: 1rem;
 }
 
-/* Footer */
-.footer {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-secondary);
-    background: var(--gradient-primary);
-    border-radius: var(--border-radius);
-    box-shadow: 
-        inset 6px 6px 12px var(--shadow-dark),
-        inset -6px -6px 12px var(--shadow-light);
-}
-
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }
@@ -910,4 +898,306 @@ textarea:focus {
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
+}
+
+/* Genshin UID Checker Styles */
+.player-card {
+    background: var(--gradient-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 
+        6px 6px 12px var(--shadow-dark),
+        -6px -6px 12px var(--shadow-light);
+}
+
+.player-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.player-avatar img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    box-shadow: 
+        4px 4px 8px var(--shadow-dark),
+        -4px -4px 8px var(--shadow-light);
+}
+
+.player-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.player-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    border-radius: 15px;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.stat-item i {
+    color: var(--accent-color);
+}
+
+.player-signature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--primary-color);
+    border-radius: 15px;
+    margin-bottom: 1rem;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+    font-style: italic;
+    color: var(--text-secondary);
+}
+
+.player-signature i {
+    color: var(--accent-color);
+}
+
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--primary-color);
+    border-radius: 15px;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+.achievement-item i {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+}
+
+.achievement-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.achievement-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.achievement-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.character-cards {
+    margin-top: 1.5rem;
+}
+
+.character-cards h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.character-cards h3 i {
+    color: var(--accent-color);
+}
+
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.character-card {
+    background: var(--gradient-primary);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    box-shadow: 
+        6px 6px 12px var(--shadow-dark),
+        -6px -6px 12px var(--shadow-light);
+    transition: var(--transition);
+}
+
+.character-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark),
+        -8px -8px 16px var(--shadow-light);
+}
+
+.character-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.character-card img:hover {
+    transform: scale(1.05);
+}
+
+/* Shortlink Bypass Styles */
+.bypass-card {
+    background: var(--gradient-primary);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 
+        6px 6px 12px var(--shadow-dark),
+        -6px -6px 12px var(--shadow-light);
+}
+
+.bypass-card.error {
+    border-left: 4px solid #f56565;
+}
+
+.bypass-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.bypass-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.bypass-header h3 i {
+    color: #48bb78;
+}
+
+.bypass-card.error .bypass-header h3 i {
+    color: #f56565;
+}
+
+.service-name {
+    background: var(--primary-color);
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--accent-color);
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+.url-section {
+    margin-bottom: 1.5rem;
+}
+
+.url-item {
+    margin-bottom: 1rem;
+}
+
+.url-item.main-result {
+    padding: 1rem;
+    background: var(--primary-color);
+    border-radius: 15px;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+.url-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.url-item label i {
+    color: var(--accent-color);
+}
+
+.url-display {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.url-display input {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: var(--gradient-primary);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    box-shadow: 
+        inset 3px 3px 6px var(--shadow-dark),
+        inset -3px -3px 6px var(--shadow-light);
+}
+
+.url-display input:focus {
+    outline: none;
+    box-shadow: 
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -4px -4px 8px var(--shadow-light);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-btn.primary {
+    background: var(--gradient-secondary);
+    color: white;
+}
+
+.action-btn.secondary {
+    background: var(--gradient-primary);
+    color: var(--text-primary);
+    border: 2px solid var(--accent-color);
+}
+
+.action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        8px 8px 16px var(--shadow-dark),
+        -8px -8px 16px var(--shadow-light);
+}
+
+.action-btn.secondary:hover {
+    background: var(--accent-color);
+    color: white;
 }

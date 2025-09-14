@@ -664,6 +664,249 @@ class YogaXDTools {
         }
     }
 
+    async checkGenshinUID() {
+        const uidInput = document.getElementById('genshin-uid');
+        const uid = uidInput.value.trim();
+        
+        if (!uid) {
+            this.showNotification('Silakan masukkan UID Genshin Impact', 'error');
+            return;
+        }
+
+        // Validate UID format (should be 9 digits)
+        if (!/^\d{9}$/.test(uid)) {
+            this.showNotification('UID harus berupa 9 digit angka', 'error');
+            return;
+        }
+
+        this.showLoading(true);
+        
+        try {
+            // Use local API endpoint to avoid CORS issues
+            const apiUrl = `/api/genshin-uid?uid=${encodeURIComponent(uid)}`;
+            const response = await fetch(apiUrl);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.status && data.data) {
+                    this.displayGenshinPlayerData(data.data);
+                    this.showNotification('Data player berhasil dimuat!', 'success');
+                } else {
+                    throw new Error('Invalid response from Genshin UID API');
+                }
+            } else {
+                const errorData = await response.json();
+                if (response.status === 404) {
+                    this.showNotification('UID tidak ditemukan atau tidak valid', 'error');
+                } else if (response.status === 400) {
+                    this.showNotification(errorData.message || 'Format UID tidak valid', 'error');
+                } else {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+            }
+            
+        } catch (error) {
+            this.handleError(error, 'Genshin UID Checker');
+        }
+        
+        this.showLoading(false);
+    }
+
+    displayGenshinPlayerData(data) {
+        const resultArea = document.getElementById('genshin-result');
+        const playerInfo = document.getElementById('player-info');
+        const characterCards = document.getElementById('character-cards');
+        const cardsContainer = document.getElementById('cards-container');
+        
+        // Show result area
+        resultArea.style.display = 'block';
+
+        // Display player information
+        if (data.playerData) {
+            const player = data.playerData;
+            playerInfo.innerHTML = `
+                <div class="player-card">
+                    <div class="player-header">
+                        <div class="player-avatar">
+                            <img src="${player.avatar}" alt="Player Avatar" onerror="this.src='https://via.placeholder.com/100x100?text=Avatar'">
+                        </div>
+                        <div class="player-details">
+                            <h3 class="player-name">${player.username}</h3>
+                            <div class="player-stats">
+                                <div class="stat-item">
+                                    <i class="fas fa-star"></i>
+                                    <span>${player.adventureRank}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <i class="fas fa-globe"></i>
+                                    <span>${player.worldLevel}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="player-signature">
+                        <i class="fas fa-quote-left"></i>
+                        <span>${player.signature || 'No signature'}</span>
+                    </div>
+                    <div class="player-achievements">
+                        <div class="achievement-grid">
+                            <div class="achievement-item">
+                                <i class="fas fa-trophy"></i>
+                                <div class="achievement-info">
+                                    <span class="achievement-label">Achievements</span>
+                                    <span class="achievement-value">${player.stats?.totalAchievement || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div class="achievement-item">
+                                <i class="fas fa-dungeon"></i>
+                                <div class="achievement-info">
+                                    <span class="achievement-label">Spiral Abyss</span>
+                                    <span class="achievement-value">${player.stats?.spiralAbyss || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div class="achievement-item">
+                                <i class="fas fa-theater-masks"></i>
+                                <div class="achievement-info">
+                                    <span class="achievement-label">Theater</span>
+                                    <span class="achievement-value">${player.stats?.theater || 'N/A'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display character cards if available
+        if (data.characterCards && data.characterCards.length > 0) {
+            characterCards.style.display = 'block';
+            cardsContainer.innerHTML = data.characterCards.map((cardUrl, index) => `
+                <div class="character-card">
+                    <img src="${cardUrl}" alt="Character Card ${index + 1}" 
+                         onerror="this.src='https://via.placeholder.com/300x400?text=Character+Card'"
+                         onclick="openImageModal('${cardUrl}')">
+                </div>
+            `).join('');
+        } else {
+            characterCards.style.display = 'none';
+        }
+    }
+
+    async bypassShortlink() {
+        const urlInput = document.getElementById('bypass-url');
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+            this.showNotification('Silakan masukkan URL shortlink', 'error');
+            return;
+        }
+
+        if (!this.isValidUrl(url)) {
+            this.showNotification('Silakan masukkan URL yang valid', 'error');
+            return;
+        }
+
+        this.showLoading(true);
+        
+        try {
+            // Use local API endpoint to avoid CORS issues
+            const apiUrl = `/api/shortlink-bypass?url=${encodeURIComponent(url)}`;
+            const response = await fetch(apiUrl);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.status && data.data) {
+                    this.displayBypassResult(data);
+                    this.showNotification('Link berhasil di-bypass!', 'success');
+                } else {
+                    throw new Error('Invalid response from bypass API');
+                }
+            } else {
+                const errorData = await response.json();
+                if (response.status === 404) {
+                    this.showNotification('URL ini tidak didukung atau tidak dapat di-bypass', 'error');
+                } else if (response.status === 400) {
+                    this.showNotification(errorData.message || 'Format URL tidak valid', 'error');
+                } else {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+            }
+            
+        } catch (error) {
+            this.handleError(error, 'Shortlink Bypass');
+        }
+        
+        this.showLoading(false);
+    }
+
+    displayBypassResult(data) {
+        const resultArea = document.getElementById('bypass-result');
+        const bypassInfo = document.getElementById('bypass-info');
+        
+        // Show result area
+        resultArea.style.display = 'block';
+
+        // Display bypass information
+        if (data.data && data.data.data) {
+            const bypassedUrl = data.data.data;
+            const serviceName = data.data.name || 'Unknown Service';
+            const originalUrl = data.originalUrl || 'N/A';
+            
+            bypassInfo.innerHTML = `
+                <div class="bypass-card">
+                    <div class="bypass-header">
+                        <h3><i class="fas fa-check-circle"></i> Bypass Berhasil!</h3>
+                        <div class="service-info">
+                            <span class="service-name">${serviceName}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="url-section">
+                        <div class="url-item">
+                            <label><i class="fas fa-link"></i> URL Asli:</label>
+                            <div class="url-display">
+                                <input type="text" value="${originalUrl}" readonly>
+                                <button class="copy-btn" onclick="copyToClipboard('original-url-${this.generateRandomId()}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="url-item main-result">
+                            <label><i class="fas fa-external-link-alt"></i> URL Hasil Bypass:</label>
+                            <div class="url-display">
+                                <input type="text" id="bypassed-url" value="${bypassedUrl}" readonly>
+                                <button class="copy-btn" onclick="copyToClipboard('bypassed-url')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="action-btn primary" onclick="window.open('${bypassedUrl}', '_blank')">
+                            <i class="fas fa-external-link-alt"></i> Buka Link
+                        </button>
+                        <button class="action-btn secondary" onclick="copyToClipboard('bypassed-url')">
+                            <i class="fas fa-copy"></i> Copy Link
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            bypassInfo.innerHTML = `
+                <div class="bypass-card error">
+                    <div class="bypass-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Bypass Gagal</h3>
+                    </div>
+                    <p>Tidak dapat mem-bypass URL ini. Mungkin URL tidak didukung atau sudah tidak aktif.</p>
+                </div>
+            `;
+        }
+    }
+
     downloadResult(tool) {
         if (tool === 'tohitam' && this.currentProcessedImage) {
             const link = document.createElement('a');
@@ -872,6 +1115,14 @@ function generateIphoneQuote() {
 
 function checkGardenStock() {
     yogaXDTools.checkGardenStock();
+}
+
+function checkGenshinUID() {
+    yogaXDTools.checkGenshinUID();
+}
+
+function bypassShortlink() {
+    yogaXDTools.bypassShortlink();
 }
 
 function downloadResult(tool) {

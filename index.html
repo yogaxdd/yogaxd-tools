@@ -89,6 +89,32 @@
                     <i class="fas fa-arrow-right"></i>
                 </button>
             </div>
+
+            <!-- Genshin UID Checker Tool -->
+            <div class="tool-card" id="genshin-card">
+                <div class="tool-icon">
+                    <i class="fas fa-gamepad"></i>
+                </div>
+                <h3>Cek UID Genshin Impact</h3>
+                <p>Cek informasi player Genshin Impact dengan UID</p>
+                <button class="tool-btn" onclick="openTool('genshin')">
+                    <span>Open Tool</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+
+            <!-- Shortlink Bypass Tool -->
+            <div class="tool-card" id="bypass-card">
+                <div class="tool-icon">
+                    <i class="fas fa-external-link-alt"></i>
+                </div>
+                <h3>Bypass Shortlink</h3>
+                <p>Bypass iklan shortlink dan langsung ke website utama</p>
+                <button class="tool-btn" onclick="openTool('bypass')">
+                    <span>Open Tool</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
         </main>
 
         <!-- Tool Modals -->
@@ -285,6 +311,64 @@
                         <div class="stock-section">
                             <h3><i class="fas fa-calendar-alt"></i> Events</h3>
                             <div class="stock-grid" id="events-grid"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Genshin UID Checker Modal -->
+        <div class="modal" id="genshin-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-gamepad"></i> Cek UID Genshin Impact</h2>
+                    <button class="close-btn" onclick="closeModal('genshin-modal')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="genshin-uid">Masukkan UID Genshin Impact:</label>
+                        <input type="text" id="genshin-uid" placeholder="856012067" maxlength="9" pattern="[0-9]{9}">
+                        <button class="action-btn" onclick="checkGenshinUID()">
+                            <i class="fas fa-search"></i> Cek UID
+                        </button>
+                    </div>
+                    <div class="result-area" id="genshin-result" style="display: none;">
+                        <div class="player-info" id="player-info">
+                            <!-- Player data will be displayed here -->
+                        </div>
+                        <div class="character-cards" id="character-cards" style="display: none;">
+                            <h3><i class="fas fa-users"></i> Character Cards</h3>
+                            <div class="cards-container" id="cards-container">
+                                <!-- Character cards will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shortlink Bypass Modal -->
+        <div class="modal" id="bypass-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fas fa-external-link-alt"></i> Bypass Shortlink</h2>
+                    <button class="close-btn" onclick="closeModal('bypass-modal')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <label for="bypass-url">Masukkan URL Shortlink:</label>
+                        <input type="url" id="bypass-url" placeholder="https://linkvertise.com/514008/hydrogen-gateway-1">
+                        <button class="action-btn" onclick="bypassShortlink()">
+                            <i class="fas fa-unlock"></i> Bypass Link
+                        </button>
+                    </div>
+                    <div class="result-area" id="bypass-result" style="display: none;">
+                        <div class="bypass-info" id="bypass-info">
+                            <!-- Bypass result will be displayed here -->
                         </div>
                     </div>
                 </div>
